@@ -61,7 +61,7 @@ Install-Module PSWindowsUpdate -Confirm:$false -Force > Out-Null
 Import-Module PSWindowsUpdate > Out-Null
 
 # Asynchronously download Windows updates
-"Downloading windows updates" | Out-Host
+"Installing windows updates" | Out-Host
 $WindowsUpdate = Start-Job {
 	#Install Windows Updates
 	Import-Module PSWindowsUpdate
@@ -218,7 +218,7 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 }
 
 # Finishing installation
-"Waiting for Windows update download to complete"| Out-Host
+"Waiting for Windows update to finish"| Out-Host
 Wait-Job -Job $WindowsUpdate
 $JobResults = Receive-Job -Job $WindowsUpdate
 $JobResults | Out-Host
