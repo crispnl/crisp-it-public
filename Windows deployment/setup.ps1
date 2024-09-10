@@ -61,7 +61,7 @@ Install-Module PSWindowsUpdate -Confirm:$false -Force > Out-Null
 Import-Module PSWindowsUpdate > Out-Null
 
 # Asynchronously download Windows updates
-"Installing windows updates" | Out-Host
+"Downloading windows updates" | Out-Host
 $WindowsUpdate = Start-Job {
 	#Install Windows Updates
 	Import-Module PSWindowsUpdate
@@ -217,12 +217,18 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 	}
 }
 
-# Finishing installation
+# Finishing Windows update. Wait-Job doesn't wait on update. 
 "Waiting for Windows update to finish"| Out-Host
 Wait-Job -Job $WindowsUpdate
 $JobResults = Receive-Job -Job $WindowsUpdate
 $JobResults | Out-Host
 Remove-Job -Job $WindowsUpdate
+do {
+	$Updating = (Get-WUInstallerstatus).isBusy
+	Start-Sleep -s 10
+} while ($Updating)
+
+
 Write-Host -ForegroundColor Green "Setup finished `n System will restart in 5 seconds"
 Stop-Transcript
 Start-Sleep -s 5
