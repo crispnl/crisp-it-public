@@ -1,3 +1,4 @@
+# Disabling progress bar significantly shortens Invoke-Webrequest wait
 $ProgressPreference = "SilentlyContinue"
 "Setting up desktop. Don't close this window. The system will reboot when done" | Out-Host
 
@@ -9,7 +10,7 @@ Start-Transcript -Append "$($env:ProgramData)\IT\Logs\$($env:UserName)_setup.log
 "Installing apps" | Out-Host
 winget install Notion.Notion --accept-source-agreements --accept-package-agreements
 
-# Remove reinstalled bloat
+# Remove reinstalled bloat. Uninstalling for user scope because the script runs without admin rights
 "Removing bloat" | Out-Host
 winget uninstall "Microsoft-tips" --scope user
 winget uninstall "Windows Web Experience Pack" --scope user

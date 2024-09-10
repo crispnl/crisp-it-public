@@ -1,4 +1,6 @@
+# Disabling progress bar significantly shortens Invoke-Webrequest wait
 $ProgressPreference = "SilentlyContinue"
+
 "Finishing Windows installation" | Out-Host
 Start-Sleep  -s 30
 $SerialNumber= (Get-WmiObject -class win32_bios).SerialNumber
@@ -54,17 +56,19 @@ do{
 } while(!$ping)
 
 # Installing PSWindowsupdate
-Install-PackageProvider -Name NuGet -Confirm:$false -Force
-Install-Module PSWindowsUpdate -Confirm:$false -Force
-Import-Module PSWindowsUpdate
+Install-PackageProvider -Name NuGet -Confirm:$false -Force > Out-Null
+Install-Module PSWindowsUpdate -Confirm:$false -Force > Out-Null
+Import-Module PSWindowsUpdate > Out-Null
 
 # Asynchronously download Windows updates
-"Starting async Windows update" | Out-Host
+"Downloading windows updates" | Out-Host
 $WindowsUpdate = Start-Job {
-	# Install Windows Updates
+	#Install Windows Updates
+	Import-Module PSWindowsUpdate
+	Start-Sleep -s 5
 	$Updates = Get-WindowsUpdate
 	if ($Updates) {
-		Get-WindowsUpdate -Download -AcceptAll
+		Get-WindowsUpdate -Install -AcceptAll -IgnoreReboot | Select-Object KB, Result, Title, Size
 	}
 }
 
@@ -101,7 +105,7 @@ foreach ($Package in $Packages) {
     }
 }
 
-# Removing  reinstalled bloat
+# Removing reinstalled bloat
 winget uninstall Microsoft.Onedrive
 winget uninstall Microsoft.Teams
 
@@ -144,7 +148,7 @@ Start-Sleep -s 2
 "Changing default user settings" | Out-Host
 New-PSDrive -PSProvider Registry -Name HKU -Root HKEY_USERS
 $DefaultHive = "C:\Users\Default\ntuser.dat"
-reg load "HKU\Default" $DefaultHive
+REG LOAD "HKU\Default" $DefaultHive
 $Settings = 
 [PSCustomObject]@{
     Path  = "Software\Microsoft\Windows\CurrentVersion\RunOnce"
@@ -196,8 +200,8 @@ foreach ($Setting in $Settings) {
 	}
     New-ItemProperty -Path $Path -Name $Setting.Name -PropertyType $Setting.Type -Value $Setting.Value -Force
 }
+REG UNLOAD "HKU\Default"
 Remove-PSDrive -Name HKU 
-reg unload "HKU\Default"
 
 # Disable autoLogon
 REG ADD "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
@@ -205,7 +209,7 @@ REG ADD "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdmi
 # Remove stored credentials
 REG DELETE "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultPassword /f
 
-# Removes install files and sets acces rights for user script
+# Removes install files and sets access rights for user script
 Remove-Item -Path "$($env:ProgramData)\IT\Appx" -Recurse -Force
 Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 	if ($_.Name -notlike "user.ps1"){
@@ -214,11 +218,12 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 }
 
 # Finishing installation
-"Waiting for Windows update to complete" | Out-Host
+"Waiting for Windows update download to complete"| Out-Host
 Wait-Job -Job $WindowsUpdate
 $JobResults = Receive-Job -Job $WindowsUpdate
 $JobResults | Out-Host
 Remove-Job -Job $WindowsUpdate
-Write-Host -ForegroundColor Green "Finishing up Windows update. `n System will restart when done"
+Write-Host -ForegroundColor Green "Setup finished `n System will restart in 5 seconds"
 Stop-Transcript
-Install-WindowsUpdate -AcceptAll -Install -AutoReboot
+Start-Sleep -s 5
+Restart-Computer
