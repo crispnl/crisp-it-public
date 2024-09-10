@@ -69,6 +69,10 @@ $WindowsUpdate = Start-Job {
 	$Updates = Get-WindowsUpdate
 	if ($Updates) {
 		Get-WindowsUpdate -Install -AcceptAll -IgnoreReboot | Select-Object KB, Result, Title, Size
+		do {
+			$Updating = (Get-WUInstallerstatus).isBusy
+			Start-Sleep -s 10
+		} while ($Updating)
 	}
 }
 
@@ -217,18 +221,12 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 	}
 }
 
-# Finishing Windows update. Wait-Job doesn't wait on update. 
+# Finishing Windows update. 
 "Waiting for Windows update to finish"| Out-Host
 Wait-Job -Job $WindowsUpdate
 $JobResults = Receive-Job -Job $WindowsUpdate
 $JobResults | Out-Host
 Remove-Job -Job $WindowsUpdate
-do {
-	$Updating = (Get-WUInstallerstatus).isBusy
-	Start-Sleep -s 10
-} while ($Updating)
-
-
 Write-Host -ForegroundColor Green "Setup finished `n System will restart in 5 seconds"
 Stop-Transcript
 Start-Sleep -s 5
