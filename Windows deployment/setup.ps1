@@ -60,19 +60,13 @@ Install-PackageProvider -Name NuGet -Confirm:$false -Force > Out-Null
 Install-Module PSWindowsUpdate -Confirm:$false -Force > Out-Null
 Import-Module PSWindowsUpdate > Out-Null
 
-# Asynchronously download Windows updates
+# Asynchronously install Windows updates
 "Downloading windows updates" | Out-Host
-$WindowsUpdate = Start-Job {
-	#Install Windows Updates
-	Import-Module PSWindowsUpdate
+Start-Job -ScriptBlock{
 	Start-Sleep -s 5
 	$Updates = Get-WindowsUpdate
 	if ($Updates) {
 		Get-WindowsUpdate -Install -AcceptAll -IgnoreReboot | Select-Object KB, Result, Title, Size
-		do {
-			$Updating = (Get-WUInstallerstatus).isBusy
-			Start-Sleep -s 10
-		} while ($Updating)
 	}
 }
 
@@ -223,10 +217,7 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 
 # Finishing Windows update. 
 "Waiting for Windows update to finish"| Out-Host
-Wait-Job -Job $WindowsUpdate
-$JobResults = Receive-Job -Job $WindowsUpdate
-$JobResults | Out-Host
-Remove-Job -Job $WindowsUpdate
+Get-Job | Wait-Job | Receive-Job | Out-Host
 Write-Host -ForegroundColor Green "Setup finished `n System will restart in 5 seconds"
 Stop-Transcript
 Start-Sleep -s 5
