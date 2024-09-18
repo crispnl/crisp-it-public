@@ -62,7 +62,8 @@ Import-Module PSWindowsUpdate > Out-Null
 
 # Asynchronously install Windows updates
 "Downloading windows updates" | Out-Host
-Start-Job -ScriptBlock{
+Start-Job -ScriptBlock {
+	$ProgressPreference = "Continue"
 	Start-Sleep -s 5
 	$Updates = Get-WindowsUpdate
 	if ($Updates) {
@@ -73,7 +74,7 @@ Start-Job -ScriptBlock{
 # Install Apps
 # Instaling Chrome using direct download. The frequency of chrome updates can cause hash mismatches when installing via winget
 "Installing apps" | Out-Host
-Invoke-RestMethod -Uri "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi" -Outfile "$($env:ProgramData)\IT\Appx\googlechrome.msi"
+Invoke-WebRequest -Uri "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi" -Outfile "$($env:ProgramData)\IT\Appx\googlechrome.msi"
 msiexec.exe /i "$($env:ProgramData)\IT\Appx\googlechrome.msi" /qn /norestart
 
 $Packages = 
@@ -201,11 +202,11 @@ foreach ($Setting in $Settings) {
 REG UNLOAD "HKU\Default"
 Remove-PSDrive -Name HKU 
 
-# Disable autoLogon
-REG ADD "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
-
 # Remove stored credentials
 REG DELETE "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultPassword /f
+
+# Disable autoLogon
+REG ADD "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
 
 # Removes install files and sets access rights for user script
 Remove-Item -Path "$($env:ProgramData)\IT\Appx" -Recurse -Force
@@ -216,7 +217,7 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 }
 
 # Finishing Windows update. 
-"Waiting for Windows update to finish"| Out-Host
+"Waiting for Windows update to finish" | Out-Host
 Get-Job | Wait-Job | Receive-Job | Out-Host
 Write-Host -ForegroundColor Green "Setup finished `n System will restart in 5 seconds"
 Stop-Transcript
