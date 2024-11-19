@@ -55,22 +55,6 @@ do{
      Start-Sleep -s 5
 } while(!$ping)
 
-# Installing PSWindowsupdate
-Install-PackageProvider -Name NuGet -Confirm:$false -Force > Out-Null
-Install-Module PSWindowsUpdate -Confirm:$false -Force > Out-Null
-Import-Module PSWindowsUpdate > Out-Null
-
-# Asynchronously install Windows updates
-"Downloading windows updates" | Out-Host
-Start-Job -ScriptBlock {
-	$ProgressPreference = "Continue"
-	Start-Sleep -s 5
-	$Updates = Get-WindowsUpdate
-	if ($Updates) {
-		Get-WindowsUpdate -Install -AcceptAll -IgnoreReboot | Select-Object KB, Result, Title, Size
-	}
-}
-
 # Install Apps
 # Instaling Chrome using direct download. The frequency of chrome updates can cause hash mismatches when installing via winget
 "Installing apps" | Out-Host
@@ -216,9 +200,6 @@ Get-ChildItem "$($env:ProgramData)\IT\Scripts" | ForEach-Object {
 	}
 }
 
-# Finishing Windows update. 
-"Waiting for Windows update to finish" | Out-Host
-Get-Job | Wait-Job | Receive-Job | Out-Host
 Write-Host -ForegroundColor Green "Setup finished `n System will restart in 5 seconds"
 Stop-Transcript
 Start-Sleep -s 5

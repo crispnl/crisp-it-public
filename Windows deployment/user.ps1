@@ -1,6 +1,6 @@
 # Disabling progress bar significantly shortens Invoke-Webrequest wait
 $ProgressPreference = "SilentlyContinue"
-"Setting up desktop. Don't close this window. The system will reboot when done" | Out-Host
+"Setting up desktop. Don't press any keys. The system will reboot when done" | Out-Host
 
 # Populate registry
 Start-Sleep -s 30
