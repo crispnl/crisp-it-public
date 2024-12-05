@@ -56,7 +56,7 @@ do{
 } while(!$ping)
 
 # Install Apps
-# Instaling Chrome using direct download. The frequency of chrome updates can cause hash mismatches when installing via winget
+# Instaling Chrome using direct download. The frequency of chrome updates can cause hash mismatches when installing when installing via winget
 "Installing apps" | Out-Host
 Invoke-WebRequest -Uri "https://dl.google.com/dl/chrome/install/googlechromestandaloneenterprise64.msi" -Outfile "$($env:ProgramData)\IT\Appx\googlechrome.msi"
 msiexec.exe /i "$($env:ProgramData)\IT\Appx\googlechrome.msi" /qn /norestart
